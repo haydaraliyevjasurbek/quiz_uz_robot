@@ -1,0 +1,22 @@
+{
+  "name": "quiz_uz_robot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "worker:broadcast": "node workers/broadcastWorker.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "mammoth": "^1.6.0",
+    "mongoose": "^8.10.0",
+    "pino": "^9.6.0",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}

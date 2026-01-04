@@ -1,0 +1,18 @@
+{
+  "watch": [
+    "index.js",
+    "config",
+    "handlers",
+    "models",
+    "services",
+    "utils"
+  ],
+  "ext": "js,json",
+  "ignore": [
+    "node_modules",
+    "logs",
+    "tmp",
+    "*.log"
+  ],
+  "exec": "node"
+}
