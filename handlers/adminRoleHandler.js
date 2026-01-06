@@ -27,8 +27,12 @@ function registerAdminRoleHandlers(bot) {
     const telegramId = parts[1];
     const role = parts[2];
 
-    await adminService.upsertAdmin(telegramId, role);
-    await ctx.reply(`OK: ${telegramId} -> ${role}`);
+    try {
+      await adminService.upsertAdmin(telegramId, role);
+      await ctx.reply(`OK: ${telegramId} -> ${role}`);
+    } catch (e) {
+      await ctx.reply(`Xatolik: ${e?.message || 'bajarilmadi'}`);
+    }
   });
 
   // Delete
@@ -41,8 +45,12 @@ function registerAdminRoleHandlers(bot) {
     }
 
     const telegramId = parts[1];
-    const deleted = await adminService.deleteAdmin(telegramId);
-    await ctx.reply(deleted ? 'Deleted.' : 'Not found.');
+    try {
+      const deleted = await adminService.deleteAdmin(telegramId);
+      await ctx.reply(deleted ? 'OK: oddiy user qilindi (admin olib tashlandi).' : 'Topilmadi.');
+    } catch (e) {
+      await ctx.reply(`Xatolik: ${e?.message || 'bajarilmadi'}`);
+    }
   });
 }
 

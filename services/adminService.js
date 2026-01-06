@@ -15,6 +15,12 @@ function parseEnvSuperadmins() {
     .filter((n) => Number.isFinite(n));
 }
 
+function isEnvSuperadminId(telegramId) {
+  const id = Number(telegramId);
+  if (!Number.isFinite(id)) return false;
+  return parseEnvSuperadmins().includes(id);
+}
+
 async function ensureSuperadminsFromEnv() {
   const ids = parseEnvSuperadmins();
   if (!ids.length) return;
@@ -38,7 +44,7 @@ async function getRole(telegramId) {
   if (!Number.isFinite(id)) return null;
 
   // Env superadmin doim superadmin
-  if (parseEnvSuperadmins().includes(id)) return 'superadmin';
+  if (isEnvSuperadminId(id)) return 'superadmin';
 
   const admin = await Admin.findOne({ telegramId: id }, { role: 1 }).lean();
   return admin ? admin.role : null;
@@ -59,12 +65,22 @@ async function upsertAdmin(telegramId, role) {
   if (!Number.isFinite(id)) throw new Error('telegramId raqam bo‘lishi kerak');
   if (!ROLE_RANK[role]) throw new Error('role faqat superadmin yoki moderator');
 
+  // Safety: env superadmins are immutable from inside bot.
+  // To demote/remove them, edit ADMIN_IDS and restart the app.
+  if (isEnvSuperadminId(id) && role !== 'superadmin') {
+    throw new Error('Bu ID ADMIN_IDS da: env superadminni bot ichidan moderator/user qilib bo‘lmaydi. ADMIN_IDS dan olib tashlab restart qiling.');
+  }
+
   await Admin.updateOne({ telegramId: id }, { $set: { role } }, { upsert: true });
 }
 
 async function deleteAdmin(telegramId) {
   const id = Number(telegramId);
   if (!Number.isFinite(id)) throw new Error('telegramId raqam bo‘lishi kerak');
+
+  if (isEnvSuperadminId(id)) {
+    throw new Error('Bu ID ADMIN_IDS da: env superadminni bot ichidan o‘chirib (user qilib) bo‘lmaydi. ADMIN_IDS dan olib tashlab restart qiling.');
+  }
 
   const res = await Admin.deleteOne({ telegramId: id });
   return res.deletedCount === 1;

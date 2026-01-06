@@ -84,7 +84,7 @@ async function showAdminRoles(ctx, page) {
           Markup.button.callback('⬆️ Moderator', `admin_r:set:${id}:moderator`),
           Markup.button.callback('⭐ Superadmin', `admin_r:set:${id}:superadmin`)
         ],
-        [Markup.button.callback('🗑 O‘chirish', `admin_r:del:${id}`)]
+        [Markup.button.callback('👤 Oddiy user qilish', `admin_r:del:${id}`)]
       ]);
 
       // Send as separate message per admin entry to keep buttons simple and avoid keyboard limits.
@@ -195,6 +195,7 @@ function registerAdminRolesUi(bot) {
       await ctx.answerCbQuery('OK');
     } catch (e) {
       await ctx.answerCbQuery('Xatolik');
+      await ctx.reply(`❌ ${e?.message || 'Rolni o‘zgartirib bo‘lmadi.'}`);
     }
   });
 
@@ -207,9 +208,9 @@ function registerAdminRolesUi(bot) {
 
     await ctx.answerCbQuery();
     await ctx.reply(
-      `🗑 Adminni o‘chirish\n\nID: ${id}\nRostdan ham o‘chiramizmi?`,
+      `👤 Oddiy user qilish\n\nID: ${id}\nRostdan ham admin huquqlarini olib tashlaymizmi?`,
       Markup.inlineKeyboard([
-        [Markup.button.callback('✅ Ha, o‘chirish', `admin_r:del_confirm:${id}`)],
+        [Markup.button.callback('✅ Ha, oddiy user qilish', `admin_r:del_confirm:${id}`)],
         [Markup.button.callback('❌ Yo‘q', 'admin_r:list:0')]
       ])
     );
@@ -224,9 +225,10 @@ function registerAdminRolesUi(bot) {
 
     try {
       const deleted = await adminService.deleteAdmin(id);
-      await ctx.answerCbQuery(deleted ? 'Deleted' : 'Not found');
+      await ctx.answerCbQuery(deleted ? 'OK' : 'Topilmadi');
     } catch (e) {
       await ctx.answerCbQuery('Xatolik');
+      await ctx.reply(`❌ ${e?.message || 'O‘zgartirib bo‘lmadi.'}`);
     }
 
     await showAdminRoles(ctx, 0);
