@@ -37,6 +37,7 @@ const { registerContactAdmin } = require('./handlers/contactAdminHandler');
 const { buildMainMenuKeyboard } = require('./utils/keyboards');
 const metrics = require('./utils/metrics');
 const { startHealthServer } = require('./services/healthServer');
+const { registerReactionHandlers } = require('./handlers/reactionHandler');
 
 async function bootstrap() {
   const token = process.env.BOT_TOKEN;
@@ -114,6 +115,9 @@ async function bootstrap() {
 
   // Admin panel (button-driven)
   registerAdminMenu(bot);
+
+  // Like/Dislike for broadcast posts
+  registerReactionHandlers(bot);
 
   // Legacy alias: old "Testni boshlash" tugmasi → endi testlar ro‘yxatini ochadi
   bot.hears(['🧠 Testni boshlash', 'Testni boshlash'], showUserTests);

@@ -9,6 +9,7 @@ const { registerAdminTestsUi, showAdminTests } = require('./adminTestsUi');
 const { registerAdminUsersUi, showAdminUsers } = require('./adminUsersUi');
 const { registerAdminDirectMessageUi, startAdminDirectMessage } = require('./adminDirectMessageUi');
 const { registerAdminRolesUi, showAdminRoles } = require('./adminRolesUi');
+const { registerAdminBroadcastUi } = require('./adminBroadcastUi');
 
 function buildAdminPanelInlineKeyboard() {
   return Markup.inlineKeyboard([
@@ -16,6 +17,7 @@ function buildAdminPanelInlineKeyboard() {
     [Markup.button.callback('👥 Userlar ID', 'admin_panel:users'), Markup.button.callback('✉️ Userga yozish', 'admin_panel:dm')],
     [Markup.button.callback('📌 Natijalar', 'admin_panel:results_all'), Markup.button.callback('🏆 Attempts TOP', 'admin_panel:attempts_top')],
     [Markup.button.callback('📈 Statistika', 'admin_panel:stats'), Markup.button.callback('👮 Adminlar (SA)', 'admin_panel:roles')],
+    [Markup.button.callback('📢 Broadcast (SA)', 'admin_panel:broadcast')],
     [Markup.button.callback('❌ Yopish', 'admin_panel:close')]
   ]);
 }
@@ -42,6 +44,7 @@ function registerAdminMenu(bot) {
   registerAdminUsersUi(bot);
   registerAdminDirectMessageUi(bot);
   registerAdminRolesUi(bot);
+  registerAdminBroadcastUi(bot);
 
   bot.hears(['🛠 Admin panel', 'Admin panel'], onAdminPanel);
 

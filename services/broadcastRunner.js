@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Channel = require('../models/Channel');
 const broadcastService = require('./broadcastService');
+const reactionService = require('./reactionService');
 
 function parseSegment(segmentRaw) {
   const segment = (segmentRaw || '').trim();
@@ -20,10 +21,12 @@ function parseSegment(segmentRaw) {
 }
 
 async function buildUserQuery(seg) {
-  if (seg.type === 'all') return { isBlocked: { $ne: true } };
+  const base = { telegramId: { $ne: null }, isBlocked: { $ne: true } };
+
+  if (seg.type === 'all') return base;
 
   if (seg.type === 'source') {
-    return { sourceChannelId: seg.channelId, isBlocked: { $ne: true } };
+    return { ...base, sourceChannelId: seg.channelId };
   }
 
   const activeChannels = await Channel.find({ isActive: true }, { channelId: 1 }).lean();
@@ -31,17 +34,17 @@ async function buildUserQuery(seg) {
 
   if (!activeIds.length) {
     return seg.type === 'subscribed'
-      ? { isBlocked: { $ne: true } }
-      : { _id: { $exists: false }, isBlocked: { $ne: true } };
+      ? base
+      : { ...base, _id: { $exists: false } };
   }
 
   if (seg.type === 'subscribed') {
-    return { joinedChannels: { $all: activeIds }, isBlocked: { $ne: true } };
+    return { ...base, joinedChannels: { $all: activeIds } };
   }
 
   return {
+    ...base,
     $or: [{ joinedChannels: { $exists: false } }, { joinedChannels: { $not: { $all: activeIds } } }],
-    isBlocked: { $ne: true }
   };
 }
 
@@ -175,6 +178,7 @@ function makeSender(job) {
     return async (telegram, telegramId) => {
       const extra = {};
       if (job.captionOverride) extra.caption = job.captionOverride;
+      extra.reply_markup = reactionService.buildReactionsKb({ up: 0, down: 0 }).reply_markup;
       await telegram.copyMessage(
         telegramId,
         job.sourceChatId,
@@ -185,7 +189,9 @@ function makeSender(job) {
   }
 
   return async (telegram, telegramId) => {
-    await telegram.sendMessage(telegramId, job.messageText);
+    await telegram.sendMessage(telegramId, job.messageText, {
+      reply_markup: reactionService.buildReactionsKb({ up: 0, down: 0 }).reply_markup
+    });
   };
 }
 

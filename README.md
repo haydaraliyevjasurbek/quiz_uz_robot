@@ -31,6 +31,30 @@ Millionlab foydalanuvchi uchun polling o‘rniga webhook tavsiya qilinadi. Webho
 
 `WEBHOOK_DOMAIN` mavjud bo‘lsa bot webhook bilan, bo‘lmasa polling bilan ishga tushadi.
 
+## Free deploy (tavsiya variantlar)
+
+Telegram bot doim ishlashi kerak (24/7). Shuning uchun "free" platformalarda web-service sleep bo‘lishi mumkin.
+
+Eng real bepul variantlar:
+
+1) **Oracle Cloud Always Free (VPS)** — eng barqaror “free 24/7” (kartani tasdiqlash talab qilinishi mumkin).
+  - Serverga Node.js o‘rnating, repo’ni clone qiling
+  - `.env` ni yozing
+  - `npm ci --omit=dev && npm start` (yoki PM2 bilan)
+
+2) **Koyeb / Fly.io / Render** — GitHub’dan deploy (free limitlar bo‘lishi mumkin).
+  - Polling rejimida ishlatish mumkin (WEBHOOK_DOMAIN shart emas)
+  - `MONGODB_URI` uchun MongoDB Atlas free cluster ishlatish qulay
+
+Muhim: broadcast sizda default `BROADCAST_RUN_MODE=worker`. Free deploy’da 1 ta process bilan ishlashi uchun `.env`da:
+
+- `BROADCAST_RUN_MODE=inline`
+
+Agar worker mode ishlatsangiz, qo‘shimcha process ham ishga tushishi kerak:
+
+- bot: `npm start`
+- worker: `npm run worker:broadcast`
+
 ## Health / Metrics (ixtiyoriy)
 
 `HEALTH_PORT` ni yoqsangiz, quyidagi endpointlar ishga tushadi:
