@@ -17,6 +17,11 @@ function checkSub() {
     const text = ctx.message && typeof ctx.message.text === 'string' ? ctx.message.text : '';
     if (text.startsWith('/start')) return next();
 
+    // Live status monitoring (env user) should work even if not subscribed.
+    if (text.startsWith('/live_status') || text === '📡 Live status') {
+      return next();
+    }
+
     // Contact admin should work even if user isn't subscribed.
     if (text === '✉️ Admin ga yozish' || text === 'Admin ga yozish' || text.startsWith('/contact_admin')) {
       return next();
