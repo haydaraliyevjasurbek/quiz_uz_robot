@@ -32,6 +32,7 @@ function checkSub() {
     if (cbData && cbData.startsWith('ans:')) return next();
     if (cbData && cbData.startsWith('stop:')) return next();
     if (cbData && cbData.startsWith('react:')) return next();
+    if (cbData && cbData.startsWith('live_status:')) return next();
     if (cbData === 'check_sub' || cbData === 'noop') return next();
 
     // If user is currently contacting admin, don't block.

@@ -51,11 +51,22 @@ function formatBytes(n) {
 async function getStatsSnapshot() {
   const userFilter = { telegramId: { $exists: true, $ne: null } };
 
-  const [totalUsers, blockedUsers, inQuizUsers] = await Promise.all([
-    User.countDocuments(userFilter),
-    User.countDocuments({ ...userFilter, isBlocked: true }),
-    User.countDocuments({ ...userFilter, step: 'in_quiz' })
+  // Single round-trip to DB (cheaper than 3 separate countDocuments)
+  const agg = await User.aggregate([
+    { $match: userFilter },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: 1 },
+        blocked: { $sum: { $cond: [{ $eq: ['$isBlocked', true] }, 1, 0] } },
+        inQuiz: { $sum: { $cond: [{ $eq: ['$step', 'in_quiz'] }, 1, 0] } }
+      }
+    }
   ]);
+
+  const totalUsers = agg[0]?.total || 0;
+  const blockedUsers = agg[0]?.blocked || 0;
+  const inQuizUsers = agg[0]?.inQuiz || 0;
 
   const mem = process.memoryUsage();
   return {
@@ -101,6 +112,17 @@ function buildText(snapshot, cpuPercent) {
 // In-memory running sessions: telegramId -> { chatId, messageId, timer, prevCpu, prevAtMs }
 const sessions = new Map();
 
+function getIntervalMs() {
+  const v = Number(process.env.LIVE_STATUS_INTERVAL_MS || 5000);
+  return Number.isFinite(v) ? Math.max(1000, Math.min(v, 60_000)) : 5000;
+}
+
+function extractRetryAfterSec(err) {
+  const ra = err?.parameters?.retry_after;
+  const n = Number(ra);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
 async function startLive(ctx) {
   const telegramId = ctx.from?.id;
   if (!telegramId || !isLiveStatusViewer(telegramId)) {
@@ -133,7 +155,9 @@ async function startLive(ctx) {
   const messageId = msg?.message_id;
   if (!messageId) return;
 
-  const timer = setInterval(async () => {
+  const intervalMs = getIntervalMs();
+
+  const tick = async () => {
     const s = sessions.get(telegramId);
     if (!s) return;
 
@@ -151,6 +175,10 @@ async function startLive(ctx) {
       } catch (_) {
         // ignore
       }
+
+      // schedule next attempt
+      const still = sessions.get(telegramId);
+      if (still) still.timer = setTimeout(() => void tick(), intervalMs);
       return;
     }
 
@@ -163,13 +191,24 @@ async function startLive(ctx) {
       await ctx.telegram.editMessageText(chatId, messageId, undefined, nextText, {
         reply_markup: buildKeyboard({ running: true })
       });
+      const still = sessions.get(telegramId);
+      if (still) still.timer = setTimeout(() => void tick(), intervalMs);
     } catch (err) {
+      const retryAfterSec = extractRetryAfterSec(err);
+      if (retryAfterSec) {
+        const still = sessions.get(telegramId);
+        if (still) still.timer = setTimeout(() => void tick(), retryAfterSec * 1000);
+        return;
+      }
+
       // If we cannot edit (message deleted / old / permissions), stop updating.
-      clearInterval(s.timer);
+      const still = sessions.get(telegramId);
+      if (still?.timer) clearTimeout(still.timer);
       sessions.delete(telegramId);
     }
-  }, 5000);
+  };
 
+  const timer = setTimeout(() => void tick(), intervalMs);
   sessions.set(telegramId, { chatId, messageId, timer, prevCpu, prevAtMs });
 }
 
@@ -188,7 +227,7 @@ async function stopLive(ctx) {
     return;
   }
 
-  clearInterval(s.timer);
+  clearTimeout(s.timer);
   sessions.delete(telegramId);
 
   try {
