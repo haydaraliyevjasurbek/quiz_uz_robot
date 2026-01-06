@@ -39,6 +39,15 @@ const { startHealthServer } = require('./services/healthServer');
 const { registerReactionHandlers } = require('./handlers/reactionHandler');
 const { registerLiveStatus } = require('./handlers/liveStatusHandler');
 
+function envBool(name, defaultValue) {
+  const raw = process.env[name];
+  if (raw === undefined || raw === null || raw === '') return defaultValue;
+  const v = String(raw).trim().toLowerCase();
+  if (['1', 'true', 'yes', 'y', 'on'].includes(v)) return true;
+  if (['0', 'false', 'no', 'n', 'off'].includes(v)) return false;
+  return defaultValue;
+}
+
 async function bootstrap() {
   const token = process.env.BOT_TOKEN;
   if (!token) {
@@ -180,6 +189,7 @@ async function bootstrap() {
   const webhookDomain = process.env.WEBHOOK_DOMAIN;
   const webhookPath = process.env.WEBHOOK_PATH || '/telegraf';
   const port = Number(process.env.PORT || 3000);
+  const dropPendingUpdates = envBool('DROP_PENDING_UPDATES', true);
 
   if (webhookDomain) {
     await bot.launch({
@@ -189,13 +199,13 @@ async function bootstrap() {
         port
       },
       allowedUpdates: ['message', 'callback_query'],
-      dropPendingUpdates: true
+      dropPendingUpdates
     });
     logger.info({ webhookDomain, webhookPath, port }, 'Bot started (webhook)');
   } else {
     await bot.launch({
       allowedUpdates: ['message', 'callback_query'],
-      dropPendingUpdates: true
+      dropPendingUpdates
     });
     logger.info('Bot started (polling)');
   }
