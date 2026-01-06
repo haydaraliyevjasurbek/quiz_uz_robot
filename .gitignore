@@ -1,4 +1,5 @@
-.env
+.env.*
+!.env.example
 tmp/
 logs/
 node_modules/
