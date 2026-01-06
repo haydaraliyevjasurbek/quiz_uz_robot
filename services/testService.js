@@ -1,5 +1,4 @@
 const Test = require('../models/Test');
-const Result = require('../models/Result');
 
 function parseCorrectLetter(s) {
   const v = String(s || '').trim().toUpperCase();
@@ -41,32 +40,6 @@ async function listTests(limit = 20) {
     { $limit: lim },
     { $project: { title: 1, qCount: { $size: '$questions' } } }
   ]);
-}
-
-async function getNewestTestId() {
-  const t = await Test.findOne({}, { _id: 1 }).sort({ createdAt: -1 }).lean();
-  return t ? t._id : null;
-}
-
-async function getTopTestIdSince(sinceDate) {
-  const since = sinceDate instanceof Date ? sinceDate : new Date(sinceDate);
-  if (!Number.isFinite(since.getTime())) return null;
-
-  const rows = await Result.aggregate([
-    { $match: { completedAt: { $gte: since } } },
-    { $group: { _id: '$testId', attempts: { $sum: 1 } } },
-    { $sort: { attempts: -1 } },
-    { $limit: 1 }
-  ]);
-
-  return rows && rows[0] ? rows[0]._id : null;
-}
-
-async function resolveTodayTopTestId() {
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const top = await getTopTestIdSince(since);
-  if (top) return top;
-  return getNewestTestId();
 }
 
 async function addTest(title) {
@@ -233,9 +206,6 @@ module.exports = {
   parseQuestionAddPayload,
   parseDeterministicImport,
   listTests,
-  getNewestTestId,
-  getTopTestIdSince,
-  resolveTodayTopTestId,
   addTest,
   createTestWithQuestions,
   deleteTest,

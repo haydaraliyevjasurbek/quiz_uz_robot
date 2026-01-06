@@ -23,9 +23,6 @@ function truncateButtonText(s, maxLen) {
 function buildUserTestsKb(tests) {
   const rows = [];
 
-  // Quick-start: today's most attempted test
-  rows.push([{ text: '🔥 Bugungi TOP test', callback_data: 'u_top_today' }]);
-
   for (let i = 0; i < tests.length; i += 2) {
     const a = tests[i];
     const b = tests[i + 1];

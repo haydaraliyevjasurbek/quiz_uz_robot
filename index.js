@@ -7,7 +7,6 @@ const logger = require('./utils/logger');
 
 const { onStart } = require('./handlers/start');
 const { showUserTests, sendUserTestsList, startSelectedTest } = require('./handlers/userTestsUi');
-const testService = require('./services/testService');
 const quizEngine = require('./services/quizEngine');
 const checkSub = require('./middleware/checkSub');
 const rateLimit = require('./middleware/rateLimit');
@@ -137,29 +136,13 @@ async function bootstrap() {
       if (data === 'check_sub') {
         const res = await channelService.checkAndUpdateUserChannels(ctx);
         if (res.ok) {
-          await ctx.answerCbQuery('✅ Tasdiqlandi');
-          const telegramId = ctx.from?.id;
-          const isAdmin = telegramId ? await adminService.hasAtLeastRole(telegramId, 'moderator') : false;
-          const kb = buildMainMenuKeyboard({ isAdmin });
-          await ctx.reply('Hammasi joyida. Endi menyudan tanlang:', kb);
-          // Show tests list right away (subscription already checked)
-          await sendUserTestsList(ctx);
+          await ctx.answerCbQuery('✅ A’zo bo‘ldingiz');
+          const isAdmin = await adminService.hasAtLeastRole(ctx.from.id, 'moderator');
+          await ctx.reply('✅ Rahmat! Endi botdan foydalanishingiz mumkin.', buildMainMenuKeyboard({ isAdmin }));
         } else {
           await ctx.answerCbQuery('Hali ham a’zo emassiz');
           await channelService.sendSubscriptionPrompt(ctx, res.channels);
         }
-        return;
-      }
-
-      // Quick-start: today's top test
-      if (data === 'u_top_today') {
-        await ctx.answerCbQuery();
-        const testId = await testService.resolveTodayTopTestId();
-        if (!testId) {
-          await ctx.reply('Hozircha testlar mavjud emas. Keyinroq urinib ko‘ring.');
-          return;
-        }
-        await startSelectedTest(ctx, String(testId));
         return;
       }
 
