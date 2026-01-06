@@ -252,6 +252,8 @@ async function onLiveStatusCommand(ctx) {
 
 function registerLiveStatus(bot) {
   bot.command('live_status', onLiveStatusCommand);
+  // Fallback: some deployments/users paste the command as plain text; also supports /live_status@BotName
+  bot.hears(/^\/live_status(?:@\w+)?(?:\s+.*)?$/i, onLiveStatusCommand);
   bot.action('live_status:start', startLive);
   bot.action('live_status:stop', stopLive);
 }
