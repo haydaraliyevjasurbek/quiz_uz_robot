@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "dotenv": "^16.4.7",
+    "express": "^5.2.1",
     "mammoth": "^1.6.0",
     "mongoose": "^8.10.0",
     "pino": "^9.6.0",

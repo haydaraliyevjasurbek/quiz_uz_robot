@@ -234,6 +234,7 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
+
 module.exports = {
   bootstrap
 };
@@ -243,5 +244,16 @@ if (require.main === module) {
   bootstrap().catch((err) => {
     logger.error({ err }, 'Bootstrap failed');
     process.exit(1);
+  });
+}
+
+// Polling rejimida HTTP port ochish (Render uchun)
+if (!process.env.WEBHOOK_DOMAIN) {
+  const express = require('express');
+  const app = express();
+  const port = Number(process.env.PORT || 3000);
+  app.get('/', (req, res) => res.send('Bot ishlayapti!'));
+  app.listen(port, () => {
+    logger.info(`Express server ${port}-portda ishga tushdi`);
   });
 }
