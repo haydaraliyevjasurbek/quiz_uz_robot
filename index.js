@@ -87,8 +87,9 @@ async function bootstrap() {
   // User -> Admin contact (button-driven)
   registerContactAdmin(bot);
 
+
+  // Faqat muhim joylarda metrics ishlatiladi (masalan, health serverda yoki xatoliklarda)
   bot.on('message', async (ctx, next) => {
-    metrics.inc('message_total');
     return next();
   });
 
@@ -141,8 +142,8 @@ async function bootstrap() {
   bot.hears(['📊 Natijalarim', 'Natijalarim'], onMyResults);
 
   // Callback queries: subscription check yoki quiz answer
+
   bot.on('callback_query', async (ctx) => {
-    metrics.inc('callback_query_total');
     const data = ctx.callbackQuery && ctx.callbackQuery.data;
 
     try {

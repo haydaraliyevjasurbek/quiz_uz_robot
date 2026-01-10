@@ -33,13 +33,26 @@ function parseQuestionAddPayload(raw) {
   return { testId, question, options, correct };
 }
 
+
+// Testlar uchun oddiy RAM cache
+let cachedTests = null;
+let cachedTestsAt = 0;
+const TESTS_CACHE_TTL_MS = 10_000;
+
 async function listTests(limit = 20) {
   const lim = Math.min(Math.max(Number(limit) || 20, 1), 100);
-  return Test.aggregate([
+  const now = Date.now();
+  if (cachedTests && now - cachedTestsAt < TESTS_CACHE_TTL_MS && cachedTests.length <= lim) {
+    return cachedTests.slice(0, lim);
+  }
+  const tests = await Test.aggregate([
     { $sort: { createdAt: -1 } },
     { $limit: lim },
     { $project: { title: 1, qCount: { $size: '$questions' } } }
   ]);
+  cachedTests = tests;
+  cachedTestsAt = now;
+  return tests;
 }
 
 async function addTest(title) {
